@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ad Tasks</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- GigaPub Ad Script (loads once) -->
+    <script src="https://ad.gigapub.tech/script?id=2086"></script>
+    
+    <!-- Telegram WebApp Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #111111; --card-bg-color: #1e1e1e; --text-primary: #f5f5f5;
+            --text-secondary: #888888; --accent-primary: #FFA500;
+            --accent-gradient: linear-gradient(135deg, #FFB347, #FF6347);
+            --border-color: rgba(255, 255, 255, 0.1); --shadow-color: rgba(0, 0, 0, 0.3);
+            --success-color: #4CAF50; --error-color: #f44336; --pending-color: #FFB74D;
+        }
+        body.light-mode {
+            --bg-color: #f5f5ff; --card-bg-color: #ffffff; --text-primary: #111111;
+            --text-secondary: #666666; --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-color);
+            color: var(--text-primary); padding: 15px; overflow-x: hidden;
+        }
+        .app-container { max-width: 500px; margin: 0 auto; }
+        
+        /* --- Header --- */
+        .app-header { 
+            display: none; /* হেডার লুকানো */
+            justify-content: space-between; align-items: center; margin-bottom: 25px; 
+        }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .profile-pic { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--accent-primary); object-fit: cover; }
+        .user-info .name { font-weight: 600; font-size: 16px; }
+        .user-info .id { font-size: 12px; color: var(--text-secondary); }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .coin-display { display: flex; align-items: center; background: var(--card-bg-color); padding: 8px 12px; border-radius: 25px; gap: 8px; font-weight: 700; font-size: 16px; }
+        .coin-display img { width: 24px; height: 24px; border-radius: 50%; }
+        .theme-switcher { width: 28px; height: 28px; cursor: pointer; color: var(--text-secondary); }
+        .theme-switcher .icon { display: none; }
+        body.light-mode .theme-switcher .moon-icon { display: block; }
+        body:not(.light-mode) .theme-switcher .sun-icon { display: block; }
+
+        .card { background-color: var(--card-bg-color); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+        .btn { border: none; border-radius: 10px; background: var(--accent-gradient); color: white; font-size: 16px; font-weight: 600; cursor: pointer; padding: 10px 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s; }
+        .btn:disabled { background: #555; cursor: not-allowed; }
+        
+        .description-card p { color: var(--text-secondary); line-height: 1.6; }
+        .notice-btn { border: 1px solid var(--accent-primary); background: transparent; color: var(--accent-primary); width: 100%; margin-top: 15px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .stat-card { text-align: center; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: var(--accent-primary); }
+        .stat-card .label { font-size: 13px; color: var(--text-secondary); }
+
+        .section-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; border-left: 3px solid var(--accent-primary); padding-left: 10px;}
+        .task-card { display: flex; align-items: center; gap: 15px; }
+        .task-image img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+        .task-details { flex-grow: 1; }
+        .task-details .title { font-weight: 600; font-size: 1.1rem; }
+        .progress-bar-container { background-color: var(--border-color); border-radius: 20px; height: 8px; margin-top: 8px; overflow: hidden;}
+        .progress-bar { background: var(--accent-gradient); height: 100%; width: 0%; border-radius: 20px; transition: width 0.3s ease;}
+        .progress-text { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;}
+        .task-action .view-btn { background: var(--accent-primary); width: 45px; height: 45px; border-radius: 50%; }
+
+        .history-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .history-btn { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--card-bg-color); color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+        .history-btn.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+        .history-item { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .history-item:last-child { border-bottom: none; }
+        .history-details .title { font-weight: 500; }
+        .history-details .time { font-size: 0.8rem; color: var(--text-secondary); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background-color: var(--card-bg-color); padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h2 { color: var(--accent-primary); font-size: 1.3rem; }
+        .modal-close-btn { background: none; border: none; font-size: 2rem; color: var(--text-secondary); cursor: pointer; }
+        
+        #ad-viewer-overlay { background: rgba(0,0,0,0.9); flex-direction: column; gap: 20px; z-index: 1001;}
+        .ad-viewer-content { text-align: center; color: white; }
+        #ad-timer { font-size: 3rem; font-weight: 700; color: var(--accent-primary); }
+        #ad-instructions { font-size: 1.1rem; }
+        #ad-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: none; }
+
+        .notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); color: white; padding: 12px 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; transition: bottom 0.5s ease-in-out; text-align: center; width: 90%; max-width: 480px; }
+        .notification.show { bottom: 20px; }
+        
+        .spinner { width: 16px; height: 16px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- হেডার লুকানো কিন্তু ভিতরে ডাটা রাখা -->
+        <header class="app-header" style="display: none;">
+            <div class="user-profile">
+                <img id="profile-pic" src="https://i.ibb.co/L0xJ182/placeholder.png" alt="Profile" class="profile-pic">
+                <div class="user-info">
+                    <div id="user-name" class="name">Guest User</div>
+                    <div id="user-id" class="id">ID: Not Found</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="coin-display">
+                    <img src="https://i.ibb.co/qLc58ntq/1000091009.png" alt="Coin Icon">
+                    <span id="main-balance">0</span>
+                </div>
+                <div id="theme-switcher" class="theme-switcher">
+                    <svg class="sun-icon icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 010 1.06l-1.591 1.59a.75.75 0 11-1.06-1.06l1.59-1.591a.75.75 0 011.06 0zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.894 17.894a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.06-1.06l1.591 1.59a.75.75 0 010 1.061zM12 18.75a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM6.106 17.894a.75.75 0 010-1.06l1.591-1.59a.75.75 0 111.06 1.06l-1.59 1.591a.75.75 0 01-1.06 0zM3.75 12a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM6.106 6.106a.75.75 0 011.06 0l1.59 1.591a.75.75 0 11-1.06 1.06L6.106 7.167a.75.75 0 010-1.06z"></path></svg>
+                    <svg class="moon-icon icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-3.833 2.067-7.17 5.168-8.972a.75.75 0 01.818.162z" clip-rule="evenodd"></path></svg>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div class="card description-card">
+                <p>Complete daily ad tasks to earn coins. Follow the rules for each task to ensure you get your reward.</p>
+                <button id="notice-btn" class="btn notice-btn">How to Work?</button>
+                <div class="stats-grid">
+                    <div class="stat-card"><div id="today-ad-coins" class="value">0</div><div class="label">Today's Earnings</div></div>
+                    <div class="stat-card"><div id="total-ad-coins" class="value">0</div><div class="label">Total Earnings</div></div>
+                </div>
+            </div>
+            <div id="tasks-container"><h2 class="section-title">Today's Tasks</h2></div>
+            <div id="history-container" style="margin-top: 30px;"><h2 class="section-title">Task History</h2><div class="history-controls"><button class="history-btn active" data-period="today">Today's History</button><button class="history-btn" data-period="all">All History</button></div><div id="history-content" class="card" style="padding: 10px 20px;"></div></div>
+        </main>
+    </div>
+
+    <!-- Modals & Overlays -->
+    <div id="notice-modal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">How to Work</h2><button class="modal-close-btn">&times;</button></div><div id="notice-content" style="color: var(--text-secondary); line-height: 1.7;"></div></div></div>
+    <div id="ad-viewer-overlay" class="modal-overlay"><button id="ad-close-btn">&times;</button><div class="ad-viewer-content"><div id="ad-timer">15</div><p id="ad-instructions">Please wait...</p></div></div>
+    <div id="notification" class="notification"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, update, increment, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-database.js";
+
+       const firebaseConfig = {
+  apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
+  authDomain: "apelyfox-164c1.firebaseapp.com",
+  databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
+  projectId: "apelyfox-164c1",
+  storageBucket: "apelyfox-164c1.firebasestorage.app",
+  messagingSenderId: "1081216277329",
+  appId: "1:1081216277329:web:bfe0c3e9b4769d92e51170"
+};
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let tg = null;
+        try { tg = window.Telegram.WebApp; tg.expand(); } 
+        catch (e) { console.warn("Running in guest mode."); }
+
+        // URL থেকে ডাটা রিসিভ করার ফাংশন
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const userData = params.get('userData');
+            
+            return {
+                userId: params.get('userId'),
+                theme: params.get('theme'),
+                userData: userData ? JSON.parse(decodeURIComponent(userData)) : null
+            };
+        }
+
+        let currentUserId = null, tasks = {}, userAdStats = {};
+        let userDataFromParent = null; // মূল আইফ্রেম থেকে প্রাপ্ত ডাটা
+
+        const dom = {
+            mainBalance: document.getElementById('main-balance'), todayAdCoins: document.getElementById('today-ad-coins'), 
+            totalAdCoins: document.getElementById('total-ad-coins'), tasksContainer: document.getElementById('tasks-container'), 
+            historyContent: document.getElementById('history-content'), noticeModal: document.getElementById('notice-modal'), 
+            noticeContent: document.getElementById('notice-content'), adViewer: document.getElementById('ad-viewer-overlay'), 
+            adTimer: document.getElementById('ad-timer'), adInstructions: document.getElementById('ad-instructions'), 
+            adCloseBtn: document.getElementById('ad-close-btn'), notification: document.getElementById('notification'),
+        };
+
+        function init() {
+            // URL থেকে ডাটা রিসিভ করা
+            const urlParams = getUrlParams();
+            currentUserId = urlParams.userId;
+            userDataFromParent = urlParams.userData;
+            
+            // থিম অ্যাপ্লাই করা
+            if (urlParams.theme) {
+                applyTheme(urlParams.theme);
+            } else {
+                applyTheme(localStorage.getItem('theme') || 'dark');
+            }
+
+            if (currentUserId && userDataFromParent) {
+                initializeUserFromParent();
+            } else if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                initializeUser(tg.initDataUnsafe.user);
+            } else {
+                initializeGuest();
+            }
+            
+            fetchAndRenderTasks();
+            fetchNotice();
+            attachEventListeners();
+            
+            // Parent থেকে থিম আপডেট শোনা
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'THEME_UPDATE') {
+                    applyTheme(event.data.theme);
+                }
+            });
+        }
+
+        // মূল আইফ্রেম থেকে প্রাপ্ত ডাটা দিয়ে ইউজার ইনিশিয়ালাইজ করা
+        function initializeUserFromParent() {
+            document.getElementById('user-name').textContent = userDataFromParent.name || 'Guest User';
+            document.getElementById('user-id').textContent = `ID: ${currentUserId}`;
+            dom.mainBalance.textContent = (userDataFromParent.coins || 0).toLocaleString();
+            
+            // Firebase থেকে রিয়েল-টাইম ডাটা আপডেট শোনা
+            onValue(ref(db, `users/${currentUserId}`), (snap) => {
+                const userData = snap.val();
+                if (userData) {
+                    dom.mainBalance.textContent = (userData.mainBalance || 0).toLocaleString();
+                    document.getElementById('profile-pic').src = userData.profilePic || 'https://i.ibb.co/L0xJ182/placeholder.png';
+                }
+            });
+
+            onValue(ref(db, `adStats/${currentUserId}`), (snap) => {
+                userAdStats = snap.val() || { totalAdCoins: 0, dailyProgress: {} };
+                updateStatsUI();
+                renderTasks(); 
+                renderHistory('today');
+            });
+        }
+
+        function initializeUser(tgUser) {
+            currentUserId = tgUser.id.toString();
+            document.getElementById('user-name').textContent = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim();
+            document.getElementById('user-id').textContent = `ID: ${currentUserId}`;
+            onValue(ref(db, `users/${currentUserId}`), (snap) => {
+                dom.mainBalance.textContent = (snap.val()?.mainBalance || 0).toLocaleString();
+                document.getElementById('profile-pic').src = snap.val()?.profilePic || 'https://i.ibb.co/L0xJ182/placeholder.png';
+            });
+            onValue(ref(db, `adStats/${currentUserId}`), (snap) => {
+                userAdStats = snap.val() || { totalAdCoins: 0, dailyProgress: {} };
+                updateStatsUI();
+                renderTasks(); 
+                renderHistory('today');
+            });
+        }
+
+        function initializeGuest() {
+            document.getElementById('user-name').textContent = "Guest User";
+            document.getElementById('user-id').textContent = "Welcome!";
+            dom.tasksContainer.innerHTML += '<p style="text-align:center; color: var(--text-secondary);">Please login via Telegram to start tasks.</p>';
+        }
+
+        async function fetchAndRenderTasks() {
+            onValue(ref(db, 'adTasks'), (snapshot) => { tasks = snapshot.val() || {}; renderTasks(); });
+        }
+        
+        function renderTasks() {
+            const container = dom.tasksContainer;
+            // পুরানো টাস্ক কার্ডগুলো রিমুভ করা
+            const existingCards = container.querySelectorAll('.card');
+            existingCards.forEach(card => {
+                if (!card.classList.contains('description-card')) {
+                    card.remove();
+                }
+            });
+            
+            for (const key in tasks) {
+                const task = tasks[key];
+                const today = new Date().toISOString().slice(0, 10);
+                const progress = userAdStats.dailyProgress?.[today]?.[key]?.count || 0;
+                const progressPercent = (progress / task.totalAds) * 100;
+                const isCompleted = progress >= task.totalAds;
+                const card = document.createElement('div');
+                card.className = 'card task-card';
+                card.innerHTML = `<div class="task-image"><img src="${task.imageUrl}" alt="${task.title}"></div><div class="task-details"><div class="title">${task.title}</div><div class="progress-bar-container"><div class="progress-bar" style="width: ${progressPercent}%;"></div></div><div class="progress-text">${progress} / ${task.totalAds}</div></div><div class="task-action"><button class="btn view-btn" data-task-key="${key}" ${isCompleted ? 'disabled' : ''}>${isCompleted ? '✔️' : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.647c1.295.742 1.295 2.545 0 3.286L7.279 20.99c-1.25.717-2.779-.217-2.779-1.643V5.653z"></path></svg>'}</button></div>`;
+                container.appendChild(card);
+            }
+            container.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', handleAdViewStart));
+        }
+
+        async function fetchNotice() {
+            const snapshot = await get(ref(db, 'appSettings/adNotice'));
+            dom.noticeContent.innerHTML = snapshot.exists() ? snapshot.val().replace(/\n/g, '<br>') : "No notice available.";
+        }
+
+        function updateStatsUI() {
+            const today = new Date().toISOString().slice(0, 10);
+            const todayProgress = userAdStats.dailyProgress?.[today];
+            let todayCoins = 0;
+            if (todayProgress) {
+                for(const key in todayProgress) { todayCoins += todayProgress[key].coins || 0; }
+            }
+            dom.todayAdCoins.textContent = todayCoins.toLocaleString();
+            dom.totalAdCoins.textContent = (userAdStats.totalAdCoins || 0).toLocaleString();
+        }
+
+        let adTimerInterval = null, adCompletionTimeout = null, currentTaskKey = null;
+
+        async function loadAndShowAd(task) {
+            return new Promise((resolve, reject) => {
+                if (task.adNetworkType === 'monetag') {
+                    const zoneId = task.adNetworkId;
+                    const functionName = `show_${zoneId}`;
+                    
+                    // Remove any previous monetag scripts to avoid conflicts
+                    document.querySelectorAll('script[src*="//libtl.com/sdk.js"]').forEach(s => s.remove());
+
+                    const script = document.createElement('script');
+                    script.src = `//libtl.com/sdk.js`;
+                    script.dataset.zone = zoneId;
+                    script.dataset.sdk = functionName;
+                    script.onload = () => {
+                        // Wait for the function to be available on the window object
+                        const interval = setInterval(() => {
+                            if (typeof window[functionName] === 'function') {
+                                clearInterval(interval);
+                                window[functionName]();
+                                resolve();
+                            }
+                        }, 100);
+                    };
+                    script.onerror = () => reject(new Error("Monetag script failed to load."));
+                    document.body.appendChild(script);
+
+                } else if (task.adNetworkType === 'gigapub') {
+                    if (typeof window.showGiga === 'function') {
+                        window.showGiga();
+                        resolve();
+                    } else {
+                        reject(new Error("Gigapub function (showGiga) not found."));
+                    }
+                } else {
+                    reject(new Error("Unknown ad network type."));
+                }
+            });
+        }
+
+        async function handleAdViewStart(event) {
+            if (!currentUserId) { showNotification("Please login via Telegram to do this task.", true); return; }
+            const button = event.currentTarget;
+            currentTaskKey = button.dataset.taskKey;
+            const task = tasks[currentTaskKey];
+            const today = new Date().toISOString().slice(0, 10);
+            const currentCount = userAdStats.dailyProgress?.[today]?.[currentTaskKey]?.count || 0;
+            if (currentCount >= task.totalAds) { showNotification("You have completed this task for today.", true); return; }
+            const isClickTask = (currentCount + 1) % 5 === 0 && currentCount > 0;
+            
+            button.disabled = true;
+            button.innerHTML = `<span class="spinner"></span>`;
+
+            try {
+                await loadAndShowAd(task);
+                showAdViewer(isClickTask, task);
+            } catch (e) {
+                showNotification("Failed to load ad. Please try again.", true);
+                console.error("Ad loading error:", e);
+                renderTasks(); // Re-render to restore the button
+            }
+        }
+
+        function showAdViewer(isClickTask, task) {
+            const waitTime = isClickTask ? task.clickWaitSeconds : 15;
+            dom.adTimer.textContent = waitTime;
+            dom.adInstructions.textContent = isClickTask ? `Please click on the ad and wait for ${waitTime} seconds.` : `Please wait...`;
+            dom.adViewer.classList.add('show');
+            let timeLeft = waitTime;
+            adTimerInterval = setInterval(() => {
+                timeLeft--;
+                dom.adTimer.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(adTimerInterval);
+                    if (!isClickTask) {
+                         handleAdCompletion(task, false);
+                    } else {
+                        dom.adInstructions.textContent = "You can go back now.";
+                        dom.adCloseBtn.style.display = 'block';
+                    }
+                }
+            }, 1000);
+            if (isClickTask) {
+                adCompletionTimeout = setTimeout(() => { if(dom.adViewer.classList.contains('show')) handleAdCompletion(task, true); }, (waitTime + 5) * 1000);
+            }
+        }
+        
+        dom.adCloseBtn.addEventListener('click', () => handleAdCompletion(tasks[currentTaskKey], true));
+
+        function handleAdCompletion(task, isClickTask) {
+            clearInterval(adTimerInterval); clearTimeout(adCompletionTimeout);
+            dom.adViewer.classList.remove('show'); dom.adCloseBtn.style.display = 'none';
+
+            const today = new Date().toISOString().slice(0, 10);
+            const updates = {};
+            updates[`/adStats/${currentUserId}/dailyProgress/${today}/${currentTaskKey}/count`] = increment(1);
+            updates[`/adStats/${currentUserId}/dailyProgress/${today}/${currentTaskKey}/coins`] = increment(task.reward);
+            updates[`/adStats/${currentUserId}/totalAdCoins`] = increment(task.reward);
+            updates[`/users/${currentUserId}/mainBalance`] = increment(task.reward);
+
+            update(ref(db), updates).then(() => {
+                showNotification(`Congratulations! You earned ${task.reward} coins.`);
+                const currentCount = (userAdStats.dailyProgress?.[today]?.[currentTaskKey]?.count || 0) + 1;
+                if (currentCount === task.totalAds) {
+                    push(ref(db, 'adHistory'), { userId: currentUserId, taskTitle: task.title, completedAt: serverTimestamp() });
+                }
+            });
+        }
+        
+        function renderHistory(period) {
+            if (!currentUserId) { dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No history found.</p>'; return; }
+            onValue(ref(db, 'adHistory'), (snapshot) => {
+                dom.historyContent.innerHTML = '';
+                if (!snapshot.exists()) { dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No history found.</p>'; return; }
+                let items = [];
+                const todayStr = new Date().toISOString().slice(0, 10);
+                snapshot.forEach(child => {
+                    const item = child.val();
+                    if(item.userId === currentUserId) {
+                        const itemDateStr = new Date(item.completedAt).toISOString().slice(0, 10);
+                        if (period === 'all' || (period === 'today' && itemDateStr === todayStr)) items.push(item);
+                    }
+                });
+                if(items.length === 0) { dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No history found for this period.</p>'; return; }
+                items.sort((a,b) => b.completedAt - a.completedAt).forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `<div class="history-details"><div class="title">${item.taskTitle} Completed</div><div class="time">${new Date(item.completedAt).toLocaleString()}</div></div>`;
+                    dom.historyContent.appendChild(div);
+                });
+            }, { onlyOnce: true });
+        }
+        
+        function attachEventListeners() {
+            document.getElementById('notice-btn').addEventListener('click', () => dom.noticeModal.classList.add('show'));
+            dom.noticeModal.querySelector('.modal-close-btn').addEventListener('click', () => dom.noticeModal.classList.remove('show'));
+            document.getElementById('theme-switcher').addEventListener('click', () => { const current = localStorage.getItem('theme') || 'dark'; applyTheme(current === 'dark' ? 'light' : 'dark'); });
+            document.querySelectorAll('.history-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                document.querySelector('.history-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                renderHistory(e.target.dataset.period);
+            }));
+        }
+
+        function applyTheme(theme) { 
+            document.body.classList.toggle('light-mode', theme === 'light'); 
+            localStorage.setItem('theme', theme); 
+        }
+        
+        function showNotification(message, isError = false) {
+            dom.notification.textContent = message;
+            dom.notification.className = `notification show ${isError ? 'error' : ''}`;
+            setTimeout(() => dom.notification.classList.remove('show'), 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
