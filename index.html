@@ -37,7 +37,7 @@
         .app-container { max-width: 500px; margin: 0 auto; padding: 15px; position: relative; }
         
         /* Text Overflow Prevention */
-        .user-name, .user-chat-id, .coin-display span, .nav-item span, .menu-profile-name, .menu-profile-username {
+        .user-name, .user-chat-id, .nav-item span, .menu-profile-name, .menu-profile-username {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -50,9 +50,39 @@
         .user-info .user-name { font-weight: 600; font-size: 16px; max-width: 120px; }
         .user-info .user-chat-id { font-size: 12px; color: var(--text-secondary); max-width: 120px; }
         .header-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .coin-display { display: flex; align-items: center; background: var(--card-bg-color); padding: 8px 12px; border-radius: 25px; gap: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 10px var(--shadow-color); max-width: 120px; }
-        .coin-display img { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;}
-        .coin-display span { max-width: 60px; }
+        
+        /* Notification Bell */
+        .notification-bell { 
+            position: relative; 
+            background-color: var(--header-icon-bg); 
+            border: none; 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            color: var(--text-primary); 
+            box-shadow: 0 2px 5px var(--shadow-color); 
+        }
+        .notification-bell svg { width: 22px; height: 22px; }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
         .theme-toggle-btn { background-color: var(--header-icon-bg); border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--text-primary); box-shadow: 0 2px 5px var(--shadow-color); flex-shrink: 0; }
         .theme-toggle-btn svg { width: 22px; height: 22px; }
         
@@ -63,25 +93,17 @@
         /* Bottom Navigation - Fixed with keyboard protection */
         .bottom-nav { 
             position: fixed; 
-            bottom: 15px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 95%; 
-            max-width: 500px; 
+            bottom: 0;
+            left: 0; 
+            width: 100%; 
             height: 70px; 
             background: var(--card-bg-color); 
             display: flex; 
             justify-content: space-around; 
             align-items: center; 
             z-index: 1000; 
-            border-radius: 25px; 
             box-shadow: 0 -4px 15px var(--shadow-color);
-            /* Keyboard protection */
-            transform: translateX(-50%) translateY(0);
-            transition: transform 0.3s ease;
-        }
-        .bottom-nav.keyboard-up {
-            transform: translateX(-50%) translateY(-250px);
+            padding: 0 10px;
         }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; flex-basis: 0; flex-grow: 1; padding-top: 5px; max-width: 80px; }
         .nav-item span { max-width: 100%; }
@@ -176,7 +198,7 @@
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .menu-item { 
             display: flex; 
@@ -205,6 +227,43 @@
             font-size: 16px;
         }
         
+        /* Transaction History in Menu */
+        .transaction-history { 
+            background: var(--bg-color); 
+            border-radius: 12px; 
+            padding: 15px; 
+            margin-bottom: 20px;
+        }
+        .transaction-history h3 { 
+            font-size: 16px; 
+            margin-bottom: 10px; 
+            color: var(--text-primary);
+        }
+        .transaction-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid var(--border-color);
+        }
+        .transaction-item:last-child { 
+            border-bottom: none; 
+        }
+        .transaction-type { 
+            font-weight: 600; 
+            font-size: 14px;
+        }
+        .transaction-amount { 
+            font-weight: 700; 
+            font-size: 14px;
+        }
+        .transaction-amount.positive { color: var(--success-color); }
+        .transaction-amount.negative { color: var(--error-color); }
+        .transaction-date { 
+            font-size: 12px; 
+            color: var(--text-secondary);
+        }
+        
         /* Telegram Group Buttons */
         .telegram-buttons { 
             display: grid; 
@@ -228,6 +287,62 @@
             transform: translateY(-2px);
         }
         
+        /* Notification Modal */
+        .notification-modal { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: var(--card-bg-color); 
+            padding: 25px; 
+            border-radius: 15px; 
+            z-index: 3000; 
+            box-shadow: 0 5px 25px var(--shadow-color);
+            max-width: 90%;
+            width: 400px;
+            display: none;
+        }
+        .notification-modal.active { display: block; }
+        .notification-modal h2 { 
+            margin-bottom: 15px; 
+            color: var(--accent-primary);
+        }
+        .notification-list { 
+            max-height: 300px; 
+            overflow-y: auto;
+        }
+        .notification-item { 
+            padding: 12px; 
+            border-bottom: 1px solid var(--border-color);
+        }
+        .notification-item:last-child { 
+            border-bottom: none; 
+        }
+        .notification-title { 
+            font-weight: 600; 
+            margin-bottom: 5px;
+        }
+        .notification-message { 
+            font-size: 14px; 
+            color: var(--text-secondary);
+        }
+        .notification-date { 
+            font-size: 12px; 
+            color: var(--text-secondary); 
+            text-align: right; 
+            margin-top: 5px;
+        }
+        .close-notification { 
+            position: absolute; 
+            top: 10px; 
+            right: 15px; 
+            background: none; 
+            border: none; 
+            color: var(--text-secondary); 
+            font-size: 24px; 
+            cursor: pointer;
+        }
+        
         .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: var(--success-color); color: white; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 2000; opacity: 0; transition: opacity 0.3s, top 0.3s; pointer-events: none; }
         .notification.show { opacity: 1; top: 30px;}
         .notification.error { background-color: var(--error-color); }
@@ -246,10 +361,13 @@
                 </div>
             </div>
             <div class="header-controls">
-                <div class="coin-display">
-                    <img src="https://i.ibb.co/qLc58ntq/1000105515.jpg" alt="Coin">
-                    <span id="coin-amount">0</span>
-                </div>
+                <button class="notification-bell" id="notification-bell">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5.85 3.5a.75.75 0 0 0-1.117-1 9.719 9.719 0 0 0-2.348 4.876.75.75 0 0 0 1.479.248A8.219 8.219 0 0 1 5.85 3.5ZM19.267 2.5a.75.75 0 1 0-1.118 1 8.22 8.22 0 0 1 1.987 4.124.75.75 0 0 0 1.48-.248A9.72 9.72 0 0 0 19.266 2.5Z"/>
+                        <path fill-rule="evenodd" d="M12 2.25A6.75 6.75 0 0 0 5.25 9v.75a8.217 8.217 0 0 1-2.119 5.52.75.75 0 0 0 .298 1.206c1.544.57 3.16.99 4.831 1.243a3.75 3.75 0 1 0 7.48 0 24.583 24.583 0 0 0 4.83-1.244.75.75 0 0 0 .298-1.205 8.217 8.217 0 0 1-2.118-5.52V9A6.75 6.75 0 0 0 12 2.25ZM9.75 18c0-.034 0-.067.002-.1a25.05 25.05 0 0 0 4.496 0l.002.1a2.25 2.25 0 1 1-4.5 0Z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="notification-badge" id="notification-badge" style="display: none;">0</div>
+                </button>
                 <button class="theme-toggle-btn" id="theme-toggle-btn">
                     <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z"/>
@@ -271,6 +389,19 @@
                 ></iframe>
             </div>
         </main>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="notification-modal" id="notification-modal">
+        <button class="close-notification" id="close-notification">&times;</button>
+        <h2>Notifications</h2>
+        <div class="notification-list" id="notification-list">
+            <div class="notification-item">
+                <div class="notification-title">Welcome to Our App!</div>
+                <div class="notification-message">Thank you for joining us. Start mining now!</div>
+                <div class="notification-date">Just now</div>
+            </div>
+        </div>
     </div>
 
     <!-- Side Menu -->
@@ -316,7 +447,31 @@
                 </div>
                 <div class="menu-item-text">Deposit Balance</div>
             </div>
-            
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-history">
+            <h3>Transaction History</h3>
+            <div id="transaction-list">
+                <div class="transaction-item">
+                    <div>
+                        <div class="transaction-type">Deposit</div>
+                        <div class="transaction-date">2024-01-15</div>
+                    </div>
+                    <div class="transaction-amount positive">+500</div>
+                </div>
+                <div class="transaction-item">
+                    <div>
+                        <div class="transaction-type">Withdrawal</div>
+                        <div class="transaction-date">2024-01-14</div>
+                    </div>
+                    <div class="transaction-amount negative">-200</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- More Menu Items -->
+        <div class="menu-items">
             <div class="menu-item" data-file="daily-bonus.html">
                 <div class="menu-item-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -382,7 +537,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-const firebaseConfig = {
+            const firebaseConfig = {
   apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
   authDomain: "apelyfox-164c1.firebaseapp.com",
   databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
@@ -402,9 +557,11 @@ const firebaseConfig = {
             let currentUserId = null;
             let userRef = null;
             let userPlanRef = null;
+            let notificationsRef = null;
             let userState = {};
             let userPlanState = {};
             let currentTheme = 'dark';
+            let unreadNotifications = 0;
 
             // --- DOM ELEMENTS ---
             const notification = document.getElementById('notification');
@@ -417,6 +574,11 @@ const firebaseConfig = {
             const sideMenu = document.getElementById('side-menu');
             const menuOverlay = document.getElementById('menu-overlay');
             const menuNavItem = document.getElementById('menu-nav-item');
+            const notificationBell = document.getElementById('notification-bell');
+            const notificationBadge = document.getElementById('notification-badge');
+            const notificationModal = document.getElementById('notification-modal');
+            const closeNotification = document.getElementById('close-notification');
+            const notificationList = document.getElementById('notification-list');
 
             // --- THEME MANAGEMENT ---
             function initTheme() {
@@ -457,18 +619,72 @@ const firebaseConfig = {
                 updateThemeIcon();
             });
 
-            // --- KEYBOARD PROTECTION ---
-            function handleKeyboard() {
-                const viewport = window.visualViewport;
-                if (viewport) {
-                    viewport.addEventListener('resize', () => {
-                        if (viewport.height < window.innerHeight) {
-                            bottomNav.classList.add('keyboard-up');
-                        } else {
-                            bottomNav.classList.remove('keyboard-up');
+            // --- NOTIFICATION SYSTEM ---
+            function loadNotifications() {
+                notificationsRef.on('value', (snapshot) => {
+                    const notifications = snapshot.val() || {};
+                    let unreadCount = 0;
+                    let notificationsHTML = '';
+                    
+                    // Convert to array and sort by timestamp
+                    const notificationsArray = Object.entries(notifications).map(([id, notif]) => ({
+                        id,
+                        ...notif
+                    })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    notificationsArray.forEach(notif => {
+                        if (!notif.read) unreadCount++;
+                        
+                        const date = notif.timestamp ? new Date(notif.timestamp).toLocaleDateString() : 'Recently';
+                        notificationsHTML += `
+                            <div class="notification-item">
+                                <div class="notification-title">${notif.title || 'Notification'}</div>
+                                <div class="notification-message">${notif.message || ''}</div>
+                                <div class="notification-date">${date}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    notificationList.innerHTML = notificationsHTML || '<div class="notification-item">No notifications</div>';
+                    updateNotificationBadge(unreadCount);
+                });
+            }
+
+            function updateNotificationBadge(count) {
+                unreadNotifications = count;
+                if (count > 0) {
+                    notificationBadge.textContent = count > 99 ? '99+' : count;
+                    notificationBadge.style.display = 'flex';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+            }
+
+            notificationBell.addEventListener('click', () => {
+                notificationModal.classList.add('active');
+                // Mark all as read when opening
+                markAllNotificationsAsRead();
+            });
+
+            closeNotification.addEventListener('click', () => {
+                notificationModal.classList.remove('active');
+            });
+
+            function markAllNotificationsAsRead() {
+                notificationsRef.once('value', (snapshot) => {
+                    const notifications = snapshot.val() || {};
+                    const updates = {};
+                    
+                    Object.keys(notifications).forEach(id => {
+                        if (!notifications[id].read) {
+                            updates[`${id}/read`] = true;
                         }
                     });
-                }
+                    
+                    if (Object.keys(updates).length > 0) {
+                        notificationsRef.update(updates);
+                    }
+                });
             }
 
             // --- SIDE MENU MANAGEMENT ---
@@ -511,8 +727,8 @@ const firebaseConfig = {
 
                 // Construct URL with parameters
                 const url = `${fileName}?userId=${currentUserId}&theme=${currentTheme}&userData=${encodeURIComponent(JSON.stringify({
-                    name: userState.name,
-                    coins: userState.coins,
+                    name: userState.firstName,
+                    coins: userState.coins || 0,
                     chatId: currentUserId,
                     isPremium: userPlanState.premium || false,
                     vipLevel: userPlanState.vipLevel || 0
@@ -564,7 +780,6 @@ const firebaseConfig = {
                 } else if (event.data.type === 'SHOW_NOTIFICATION') {
                     showNotification(event.data.message, event.data.isError);
                 } else if (event.data.type === 'NAVIGATE_TO') {
-                    // Navigate to different page from iframe
                     const targetPage = event.data.page;
                     const targetItem = document.querySelector(`[data-page="${targetPage}"]`);
                     if (targetItem) {
@@ -583,12 +798,20 @@ const firebaseConfig = {
                     photoUrl: tgUser.photo_url || 'https://i.ibb.co/L0xJ182/placeholder.png',
                     languageCode: tgUser.language_code || 'en',
                     isPremium: tgUser.is_premium || false,
+                    coins: 0,
+                    totalMined: 0,
+                    level: 1,
+                    referrals: 0,
+                    referralIncome: 0,
+                    isBlocked: false,
                     lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    referrerId: tg.initDataUnsafe.start_param || null,
+                    claimedReferral: false
                 };
 
                 // Save to users collection
-                userRef.set(userData);
+                userRef.update(userData);
 
                 // Initialize user plan if not exists
                 userPlanRef.once('value', (snapshot) => {
@@ -602,16 +825,32 @@ const firebaseConfig = {
                         userPlanRef.set(planData);
                     }
                 });
+
+                // Send welcome notification
+                const welcomeNotification = {
+                    title: 'Welcome to Our App!',
+                    message: 'Thank you for joining us. Start mining and earning now!',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false,
+                    type: 'welcome'
+                };
+                notificationsRef.push(welcomeNotification);
             }
 
             function updateMenuProfile() {
-                document.getElementById('menu-profile-pic').src = userState.photoUrl || 'https://i.ibb.co/L0xJ182/placeholder.png';
+                const profilePic = userState.photoUrl || 'https://i.ibb.co/L0xJ182/placeholder.png';
+                document.getElementById('menu-profile-pic').src = profilePic;
+                document.getElementById('user-profile-pic').src = profilePic;
+                
                 document.getElementById('menu-profile-name').textContent = 
+                    userState.firstName + (userState.lastName ? ' ' + userState.lastName : '');
+                document.getElementById('user-name').textContent = 
                     userState.firstName + (userState.lastName ? ' ' + userState.lastName : '');
                 
                 const usernameText = userState.username ? `@${userState.username} - ` : '';
                 document.getElementById('menu-profile-username').textContent = 
                     `${usernameText}ID: ${currentUserId}`;
+                document.getElementById('user-chat-id').textContent = `ID: ${currentUserId}`;
                 
                 // Update VIP badge
                 const vipBadge = document.getElementById('vip-badge');
@@ -627,49 +866,51 @@ const firebaseConfig = {
             // --- INITIALIZATION ---
             function initializeApp() {
                 initTheme();
-                handleKeyboard();
 
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const user = tg.initDataUnsafe.user;
                     currentUserId = user.id.toString();
                     
-                    // Update header with user info
-                    document.getElementById('user-name').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                    document.getElementById('user-chat-id').textContent = `ID: ${currentUserId}`;
-                    
-                    if (user.photo_url) {
-                        document.getElementById('user-profile-pic').src = user.photo_url;
-                    }
-
                     userRef = database.ref('users/' + currentUserId);
                     userPlanRef = database.ref('usersPlanLevel/' + currentUserId);
+                    notificationsRef = database.ref('notifications/' + currentUserId);
                     
                     auth.signInAnonymously().catch(error => console.error("Auth Error:", error));
                     auth.onAuthStateChanged(authUser => {
                         if (authUser) {
-                            // Listen for user data changes
-                            userRef.on('value', snapshot => {
+                            // Check if user exists, if not create new user
+                            userRef.once('value', (snapshot) => {
                                 if (!snapshot.exists()) {
-                                    createNewUser(user);
+                                    saveUserProfileToDatabase(user);
                                 } else {
                                     userState = snapshot.val();
                                     if(userState.isBlocked) {
                                         document.body.innerHTML = '<h1>Your account has been blocked.</h1>';
                                         return;
                                     }
-                                    updateCoinDisplay(userState.coins || 0);
-                                    updateMenuProfile();
-                                    
-                                    // Load home page by default
-                                    loadPage('home.html', 'home');
                                 }
                             });
 
+                            // Listen for user data changes
+                            userRef.on('value', (snapshot) => {
+                                userState = snapshot.val() || {};
+                                updateMenuProfile();
+                                updateCoinDisplay(userState.coins || 0);
+                            });
+
                             // Listen for user plan data changes
-                            userPlanRef.on('value', snapshot => {
+                            userPlanRef.on('value', (snapshot) => {
                                 userPlanState = snapshot.val() || {};
                                 updateMenuProfile();
                             });
+
+                            // Load notifications
+                            loadNotifications();
+
+                            // Load home page by default
+                            setTimeout(() => {
+                                loadPage('home.html', 'home');
+                            }, 1000);
 
                         }
                     });
@@ -678,28 +919,8 @@ const firebaseConfig = {
                 }
             }
 
-            function createNewUser(tgUser) {
-                const startParam = tg.initDataUnsafe.start_param;
-                const newUser = {
-                    name: tgUser.first_name,
-                    coins: 0,
-                    totalMined: 0,
-                    level: 1,
-                    referrals: 0,
-                    referralIncome: 0,
-                    isBlocked: false,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    referrerId: startParam || null,
-                    claimedReferral: false
-                };
-                userRef.set(newUser);
-                
-                // Save complete user profile to database
-                saveUserProfileToDatabase(tgUser);
-            }
-
             function updateCoinDisplay(coins) {
-                document.getElementById('coin-amount').textContent = Math.floor(coins || 0).toLocaleString();
+                // Coin display removed as per requirement
             }
 
             function showNotification(message, isError = false) {
