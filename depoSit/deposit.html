@@ -1,1 +1,544 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Deposit Panel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111111; --card-bg-color: #1e1e1e; --text-primary: #f5f5f5;
+            --text-secondary: #888888; --accent-primary: #FFA500;
+            --accent-gradient: linear-gradient(135deg, #FFB347, #FF6347);
+            --border-color: rgba(255, 255, 255, 0.1); --shadow-color: rgba(0, 0, 0, 0.3);
+            --success-color: #4CAF50; --error-color: #f44336; --pending-color: #FFB74D;
+        }
+        body.light-mode {
+            --bg-color: #f5f5ff; --card-bg-color: #ffffff; --text-primary: #111111;
+            --text-secondary: #666666; --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-color);
+            color: var(--text-primary); padding: 15px; overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        a { text-decoration: none; color: inherit; }
+        .app-container { max-width: 500px; margin: 0 auto; }
 
+        /* --- Page Views --- */
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- Main Page Header --- */
+        .app-header { 
+            display: none; /* হেডার লুকানো */
+            justify-content: space-between; align-items: center; margin-bottom: 25px; 
+        }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .profile-pic { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--accent-primary); object-fit: cover; background-color: var(--card-bg-color); }
+        .user-info .name { font-weight: 600; font-size: 16px; }
+        .user-info .id { font-size: 12px; color: var(--text-secondary); }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .coin-display { display: flex; align-items: center; background: var(--card-bg-color); padding: 8px 12px; border-radius: 25px; gap: 8px; font-weight: 700; font-size: 16px; }
+        .coin-display img { width: 24px; height: 24px; border-radius: 50%; }
+        .theme-switcher { width: 28px; height: 28px; cursor: pointer; color: var(--text-secondary); }
+        .theme-switcher .icon { display: none; }
+        body.light-mode .theme-switcher .moon-icon { display: block; }
+        body:not(.light-mode) .theme-switcher .sun-icon { display: block; }
+
+        /* Balance & Action */
+        .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .balance-card { background: var(--card-bg-color); border-radius: 15px; padding: 20px; text-align: center; }
+        .balance-card .icon svg { width: 28px; height: 28px; margin-bottom: 8px; color: var(--accent-primary); }
+        .balance-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+        .balance-label { font-size: 13px; color: var(--text-secondary); }
+        .action-btn { display: block; text-align: center; width: 100%; padding: 15px; border: none; border-radius: 10px; background: var(--accent-gradient); color: white; font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.2s; margin-bottom: 25px;}
+        .action-btn:hover:not(:disabled) { transform: translateY(-3px); }
+        .action-btn:disabled { background: #555; cursor: not-allowed; }
+
+        /* History */
+        .history-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .history-btn { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--card-bg-color); color: var(--text-secondary); font-weight: 600; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
+        .history-btn.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+        #history-content { min-height: 200px; }
+        .history-list-item { display: flex; align-items: center; gap: 15px; background-color: var(--card-bg-color); padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+        .history-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .history-icon svg { width: 20px; height: 20px; }
+        .history-icon.deposit { background-color: rgba(76, 175, 80, 0.2); color: var(--success-color); }
+        .history-icon.spent { background-color: rgba(244, 67, 54, 0.2); color: var(--error-color); }
+        .history-info { flex-grow: 1; }
+        .history-info .details { font-size: 12px; color: var(--text-secondary); }
+        .history-amount { font-size: 18px; font-weight: 700; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .status-badge.approved { background-color: rgba(76, 175, 80, 0.2); color: var(--success-color); }
+        .status-badge.pending { background-color: rgba(255, 183, 77, 0.2); color: var(--pending-color); }
+        .status-badge.rejected { background-color: rgba(244, 67, 54, 0.2); color: var(--error-color); }
+        
+        /* --- Deposit Page Styles --- */
+        .deposit-header { display: flex; align-items: center; margin-bottom: 25px; position: relative; }
+        .back-btn { font-size: 24px; color: var(--text-primary); cursor: pointer; z-index: 10; padding: 5px;}
+        .header-title { font-size: 20px; font-weight: 600; color: var(--text-primary); text-align: center; position: absolute; left: 0; right: 0; }
+        .page-step { animation: stepIn 0.5s; }
+        @keyframes stepIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 14px; }
+        .form-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-primary); font-size: 16px; }
+        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .selection-btn { padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg-color); color: var(--text-primary); cursor: pointer; font-weight: 500; font-size: 16px; transition: all 0.2s; }
+        .selection-btn:hover { border-color: var(--accent-primary); }
+        .payment-details { background-color: var(--card-bg-color); padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--accent-primary); }
+        .payment-details p { margin-bottom: 8px; color: var(--text-secondary); }
+        .payment-details span { font-weight: 600; color: var(--text-primary); word-break: break-all; }
+        
+        /* Notification */
+        .notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); color: white; padding: 12px 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; transition: bottom 0.5s ease-in-out; text-align: center; width: 90%; max-width: 480px; }
+        .notification.show { bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Main Page View -->
+        <div id="main-page" class="page-view active">
+            <!-- হেডার লুকানো কিন্তু ভিতরে ডাটা রাখা -->
+            <header class="app-header" style="display: none;">
+                <div class="user-profile">
+                    <img id="profile-pic" src="https://i.ibb.co/L0xJ182/placeholder.png" alt="Profile" class="profile-pic">
+                    <div class="user-info">
+                        <div id="user-name" class="name">Guest User</div>
+                        <div id="user-id" class="id">ID: Not Found</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="coin-display">
+                        <img src="https://i.ibb.co/qLc58ntq/1000105515.jpg" alt="Coin Icon">
+                        <span id="main-balance">0</span>
+                    </div>
+                    <div id="theme-switcher" class="theme-switcher">
+                        <svg class="sun-icon icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 010 1.06l-1.591 1.59a.75.75 0 11-1.06-1.06l1.59-1.591a.75.75 0 011.06 0zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.894 17.894a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.06-1.06l1.591 1.59a.75.75 0 010 1.061zM12 18.75a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM6.106 17.894a.75.75 0 010-1.06l1.591-1.59a.75.75 0 111.06 1.06l-1.59 1.591a.75.75 0 01-1.06 0zM3.75 12a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM6.106 6.106a.75.75 0 011.06 0l1.59 1.591a.75.75 0 11-1.06 1.06L6.106 7.167a.75.75 0 010-1.06z"></path></svg>
+                        <svg class="moon-icon icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-3.833 2.067-7.17 5.168-8.972a.75.75 0 01.818.162z" clip-rule="evenodd"></path></svg>
+                    </div>
+                </div>
+            </header>
+            <main>
+                <div class="balance-grid">
+                    <div class="balance-card">
+                        <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.463 3.536a2.25 2.25 0 013.074 0l6 5.25a2.25 2.25 0 01-1.537 3.964H6.002a2.25 2.25 0 01-1.537-3.964l6-5.25zM12 14.25a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zM3 15.75a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z"></path></svg></div>
+                        <div id="deposit-balance" class="balance-value">0</div>
+                        <div class="balance-label">ডিপোজিট ব্যালেন্স</div>
+                    </div>
+                    <div class="balance-card">
+                        <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3.375 3C2.339 3 1.5 3.84 1.5 4.875v.75c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875v-.75C22.5 3.839 21.66 3 20.625 3H3.375z"></path><path fill-rule="evenodd" d="M3.087 9l.54 9.176A3 3 0 006.62 21h10.757a3 3 0 002.995-2.824L20.913 9H3.087zm6.163 3.75A.75.75 0 0110 12h4a.75.75 0 010 1.5h-4a.75.75 0 01-.75-.75z" clip-rule="evenodd"></path></svg></div>
+                        <div id="spent-balance" class="balance-value">0</div>
+                        <div class="balance-label">মোট খরচ</div>
+                    </div>
+                </div>
+                <button id="deposit-now-btn" class="action-btn">এখনই ডিপোজিট করুন</button>
+                <div class="history-controls">
+                    <button class="history-btn active" id="deposit-history-btn">ডিপোজিট হিস্টোরি</button>
+                    <button class="history-btn" id="spending-history-btn">খরচের হিস্টোরি</button>
+                </div>
+                <div id="history-content"></div>
+            </main>
+        </div>
+
+        <!-- Deposit Page View -->
+        <div id="deposit-page" class="page-view">
+            <header class="deposit-header">
+                <div id="back-btn" class="back-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h1 class="header-title">ডিপোজিট করুন</h1>
+            </header>
+            <main>
+                <div id="step1" class="page-step">
+                    <h3>ধাপ ১: অঞ্চল নির্বাচন করুন</h3>
+                    <p class="form-group" style="color: var(--text-secondary);">আপনি কোথা থেকে পেমেন্ট করছেন তা নির্বাচন করুন।</p>
+                    <div class="selection-grid">
+                        <button class="selection-btn" data-region="bangladesh">বাংলাদেশ</button>
+                        <button class="selection-btn" data-region="international">আন্তর্জাতিক</button>
+                    </div>
+                </div>
+                <div id="step2" class="page-step">
+                    <h3>ধাপ ২: পেমেন্ট মেথড নির্বাচন করুন</h3>
+                    <p class="form-group" style="color: var(--text-secondary);">আপনার পছন্দের পেমেন্ট মেথড বেছে নিন।</p>
+                    <div id="method-selection-grid" class="selection-grid"></div>
+                </div>
+                <div id="step3" class="page-step">
+                    <h3>ধাপ ৩: পেমেন্ট পাঠান ও জমা দিন</h3>
+                    <div id="payment-details-container" class="payment-details"></div>
+                    <form id="deposit-form">
+                        <div class="form-group"><label for="amount">অ্যামাউন্ট (কয়েন)</label><input type="number" id="amount" required></div>
+                        <div class="form-group"><label for="sender-info">আপনার প্রেরক নম্বর / ওয়ালেট আইডি</label><input type="text" id="sender-info" required></div>
+                        <div class="form-group"><label for="trx-id">ট্রানজেকশন আইডি</label><input type="text" id="trx-id" required></div>
+                        <div class="form-group"><label for="screenshot">পেমেন্ট স্ক্রিনশট লিঙ্ক (<a href="https://imgbb.com/" target="_blank" style="color: var(--accent-primary);">এখানে আপলোড করুন</a>)</label><input type="url" id="screenshot" placeholder="e.g., https://ibb.co/..." required></div>
+                        <button type="submit" class="action-btn">রিভিউ এর জন্য জমা দিন</button>
+                    </form>
+                </div>
+            </main>
+        </div>
+
+    </div>
+    <div id="notification" class="notification"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+        import { getDatabase, ref, onValue, query, orderByChild, equalTo, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
+  authDomain: "apelyfox-164c1.firebaseapp.com",
+  databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
+  projectId: "apelyfox-164c1",
+  storageBucket: "apelyfox-164c1.firebasestorage.app",
+  messagingSenderId: "1081216277329",
+  appId: "1:1081216277329:web:bfe0c3e9b4769d92e51170"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let tg = null;
+        try { tg = window.Telegram.WebApp; tg.expand(); } 
+        catch (e) { console.warn("Telegram Web App script not found. Running in guest mode."); }
+
+        // URL থেকে ডাটা রিসিভ করার ফাংশন
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const userData = params.get('userData');
+            
+            return {
+                userId: params.get('userId'),
+                theme: params.get('theme'),
+                userData: userData ? JSON.parse(decodeURIComponent(userData)) : null
+            };
+        }
+
+        let currentUserId = null, currentUserName = "Guest", depositSettings = {};
+        let userDataFromParent = null; // মূল আইফ্রেম থেকে প্রাপ্ত ডাটা
+
+        const dom = {
+            mainPage: document.getElementById('main-page'), depositPage: document.getElementById('deposit-page'),
+            profilePic: document.getElementById('profile-pic'), userName: document.getElementById('user-name'),
+            userId: document.getElementById('user-id'), mainBalance: document.getElementById('main-balance'),
+            depositBalance: document.getElementById('deposit-balance'), spentBalance: document.getElementById('spent-balance'),
+            historyContent: document.getElementById('history-content'), depositHistoryBtn: document.getElementById('deposit-history-btn'),
+            spendingHistoryBtn: document.getElementById('spending-history-btn'), themeSwitcher: document.getElementById('theme-switcher'),
+            depositNowBtn: document.getElementById('deposit-now-btn'), backBtn: document.getElementById('back-btn'),
+            steps: document.querySelectorAll('.page-step'), methodSelectionGrid: document.getElementById('method-selection-grid'),
+            paymentDetailsContainer: document.getElementById('payment-details-container'), depositForm: document.getElementById('deposit-form'),
+            notification: document.getElementById('notification'),
+        };
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function showNotification(message, isError = false) {
+            dom.notification.textContent = message;
+            dom.notification.style.backgroundColor = isError ? 'var(--error-color)' : 'var(--success-color)';
+            dom.notification.classList.add('show');
+            setTimeout(() => dom.notification.classList.remove('show'), 3000);
+        }
+
+        // URL থেকে ডাটা রিসিভ করে ইউজার ইনিশিয়ালাইজ করা
+        function initializeFromUrl() {
+            const urlParams = getUrlParams();
+            currentUserId = urlParams.userId;
+            userDataFromParent = urlParams.userData;
+            
+            // থিম অ্যাপ্লাই করা
+            if (urlParams.theme) {
+                applyTheme(urlParams.theme);
+            } else {
+                applyTheme(localStorage.getItem('theme') || 'dark');
+            }
+
+            if (currentUserId && userDataFromParent) {
+                initializeUserFromParent();
+                return true;
+            }
+            return false;
+        }
+
+        // মূল আইফ্রেম থেকে প্রাপ্ত ডাটা দিয়ে ইউজার ইনিশিয়ালাইজ করা
+        function initializeUserFromParent() {
+            document.getElementById('user-name').textContent = userDataFromParent.name || 'Guest User';
+            document.getElementById('user-id').textContent = `ID: ${currentUserId}`;
+            dom.mainBalance.textContent = (userDataFromParent.coins || 0).toLocaleString();
+            currentUserName = userDataFromParent.name || 'Guest User';
+            
+            // Firebase থেকে রিয়েল-টাইম ডাটা আপডেট শোনা
+            const userRef = ref(db, `users/${currentUserId}`);
+            onValue(userRef, (snap) => {
+                const userData = snap.val() || {};
+                dom.mainBalance.textContent = (userData.mainBalance || 0).toLocaleString();
+                dom.depositBalance.textContent = (userData.depositBalance || 0).toLocaleString();
+                dom.spentBalance.textContent = (userData.spentBalance || 0).toLocaleString();
+                dom.profilePic.src = userData.profilePic || 'https://i.ibb.co/L0xJ182/placeholder.png';
+            });
+
+            loadDepositHistory();
+        }
+
+        function initializeUser(tgUser) {
+            currentUserId = tgUser.id.toString();
+            currentUserName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim();
+            dom.userName.textContent = currentUserName;
+            dom.userId.textContent = `ID: ${currentUserId}`;
+            
+            const userRef = ref(db, `users/${currentUserId}`);
+            onValue(userRef, (snap) => {
+                const userData = snap.val() || {};
+                dom.mainBalance.textContent = (userData.mainBalance || 0).toLocaleString();
+                dom.depositBalance.textContent = (userData.depositBalance || 0).toLocaleString();
+                dom.spentBalance.textContent = (userData.spentBalance || 0).toLocaleString();
+                dom.profilePic.src = userData.profilePic || 'https://i.ibb.co/L0xJ182/placeholder.png';
+            });
+            loadDepositHistory();
+        }
+
+        function initializeGuest() {
+            dom.userName.textContent = "Guest User";
+            dom.userId.textContent = "স্বাগতম!";
+            const depositBtn = document.getElementById('deposit-now-btn');
+            depositBtn.textContent = "ডিপোজিট করতে লগইন করুন";
+            depositBtn.disabled = true;
+        }
+        
+        function loadDepositHistory() {
+            if (!currentUserId) {
+                 dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">আপনার হিস্টোরি দেখতে টেলিগ্রামে লগইন করুন।</p>';
+                 return;
+            }
+            const queryRef = query(ref(db, 'deposits'), orderByChild('userId'), equalTo(currentUserId));
+            onValue(queryRef, (snapshot) => {
+                dom.historyContent.innerHTML = '';
+                if (!snapshot.exists()) {
+                    dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">কোনো ডিপোজিট হিস্টোরি পাওয়া যায়নি।</p>'; return;
+                }
+                let deposits = [];
+                snapshot.forEach(child => deposits.push(child.val()));
+                deposits.sort((a, b) => b.timestamp - a.timestamp);
+
+                deposits.forEach(data => {
+                    const item = document.createElement('div');
+                    item.className = 'history-list-item';
+                    const date = new Date(data.timestamp).toLocaleString();
+                    const amountColor = data.status === 'approved' ? 'var(--success-color)' : 'var(--text-primary)';
+                    item.innerHTML = `
+                        <div class="history-icon deposit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"></path></svg>
+                        </div>
+                        <div class="history-info">
+                            <strong class="history-amount" style="color: ${amountColor}">${data.amount.toLocaleString()} Coins</strong>
+                            <div class="details">${data.method} - ${date}</div>
+                        </div>
+                        <span class="status-badge ${data.status}">${data.status}</span>`;
+                    dom.historyContent.appendChild(item);
+                });
+            });
+        }
+        
+        function loadSpendingHistory() { 
+            dom.historyContent.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">খরচের হিস্টোরি শীঘ্রই আসছে।</p>'; 
+        }
+        
+        async function fetchDepositSettings() {
+            const settingsRef = ref(db, 'depositSettings');
+            onValue(settingsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    depositSettings = snapshot.val();
+                    // ডিফল্ট পেমেন্ট মেথড যোগ করা (যদি Firebase-এ না থাকে)
+                    if (!depositSettings.methods) {
+                        depositSettings.methods = {
+                            bangladesh: {
+                                bkash: { name: "bKash", type: "bKash", account: "017XXXXXXXX" },
+                                nagad: { name: "Nagad", type: "Nagad", account: "017XXXXXXXX" },
+                                rocket: { name: "Rocket", type: "Rocket", account: "017XXXXXXXX" },
+                                upay: { name: "Upay", type: "Upay", account: "017XXXXXXXX" }
+                            },
+                            international: {
+                                binance: { name: "Binance Pay", type: "Binance", account: "binance@example.com" },
+                                paypal: { name: "PayPal", type: "PayPal", account: "paypal@example.com" },
+                                usdt: { name: "USDT (TRC20)", type: "USDT", account: "TXXXXXXXXXXXX" },
+                                perfect_money: { name: "Perfect Money", type: "Perfect Money", account: "UXXXXXXXX" }
+                            }
+                        };
+                    }
+                    // ন্যূনতম ডিপোজিট সেট করা
+                    if (!depositSettings.minimumDeposit) {
+                        depositSettings.minimumDeposit = 1000;
+                    }
+                } else {
+                    console.warn("Deposit settings not found. Using default settings.");
+                    // ডিফল্ট পেমেন্ট মেথড
+                    depositSettings = {
+                        minimumDeposit: 1000,
+                        methods: {
+                            bangladesh: {
+                                bkash: { name: "bKash", type: "bKash", account: "017XXXXXXXX" },
+                                nagad: { name: "Nagad", type: "Nagad", account: "017XXXXXXXX" },
+                                rocket: { name: "Rocket", type: "Rocket", account: "017XXXXXXXX" },
+                                upay: { name: "Upay", type: "Upay", account: "017XXXXXXXX" },
+                                tap: { name: "Tap", type: "Tap", account: "017XXXXXXXX" },
+                                mycash: { name: "MyCash", type: "MyCash", account: "017XXXXXXXX" }
+                            },
+                            international: {
+                                binance: { name: "Binance Pay", type: "Binance", account: "binance@example.com" },
+                                paypal: { name: "PayPal", type: "PayPal", account: "paypal@example.com" },
+                                usdt: { name: "USDT (TRC20)", type: "USDT", account: "TXXXXXXXXXXXX" },
+                                perfect_money: { name: "Perfect Money", type: "Perfect Money", account: "UXXXXXXXX" },
+                                skrill: { name: "Skrill", type: "Skrill", account: "skrill@example.com" },
+                                neteller: { name: "Neteller", type: "Neteller", account: "neteller@example.com" },
+                                payeer: { name: "Payeer", type: "Payeer", account: "PXXXXXXXX" }
+                            }
+                        }
+                    };
+                }
+            }, { onlyOnce: true });
+        }
+        
+        dom.depositNowBtn.addEventListener('click', () => { showPage('deposit-page'); goToStep(1); });
+        dom.backBtn.addEventListener('click', () => { showPage('main-page'); });
+        dom.depositHistoryBtn.addEventListener('click', () => { dom.depositHistoryBtn.classList.add('active'); dom.spendingHistoryBtn.classList.remove('active'); loadDepositHistory(); });
+        dom.spendingHistoryBtn.addEventListener('click', () => { dom.spendingHistoryBtn.classList.add('active'); dom.depositHistoryBtn.classList.remove('active'); loadSpendingHistory(); });
+
+        function goToStep(stepNumber) { 
+            dom.steps.forEach(s => s.style.display = 'none'); 
+            document.getElementById(`step${stepNumber}`).style.display = 'block'; 
+        }
+        
+        document.querySelectorAll('#step1 .selection-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const region = btn.dataset.region;
+                const methods = depositSettings.methods?.[region];
+                dom.methodSelectionGrid.innerHTML = '';
+                if (methods && Object.keys(methods).length > 0) {
+                    Object.keys(methods).forEach(key => {
+                        const method = methods[key];
+                        const methodBtn = document.createElement('button');
+                        methodBtn.className = 'selection-btn';
+                        methodBtn.textContent = method.name;
+                        methodBtn.dataset.methodKey = key;
+                        methodBtn.dataset.region = region;
+                        dom.methodSelectionGrid.appendChild(methodBtn);
+                    });
+                    addMethodButtonListeners();
+                    goToStep(2);
+                } else { 
+                    showNotification(`${region} এর জন্য কোনো পেমেন্ট মেথড নেই।`, true); 
+                }
+            });
+        });
+
+        function addMethodButtonListeners() {
+            document.querySelectorAll('#step2 .selection-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const { region, methodKey } = btn.dataset;
+                    const method = depositSettings.methods[region][methodKey];
+                    dom.paymentDetailsContainer.innerHTML = `
+                        <p>অনুগ্রহ করে নিচের ${method.type}-এ টাকা পাঠান:</p>
+                        <p><strong>অ্যাকাউন্ট:</strong> <span>${method.account}</span></p>
+                        <hr style="border-color: var(--border-color); margin: 10px 0;">
+                        <p><strong>ন্যূনতম ডিপোজিট:</strong> <span>${(depositSettings.minimumDeposit || 0).toLocaleString()} কয়েন</span></p>
+                        <p><strong>বিনিময় হার:</strong> <span>1 BDT = 1 Coin</span></p>
+                    `;
+                    dom.depositForm.dataset.methodName = method.name;
+                    dom.depositForm.dataset.methodType = method.type;
+                    goToStep(3);
+                });
+            });
+        }
+        
+        dom.depositForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button');
+            if (!currentUserId) { showNotification("ডিপোজিট করতে টেলিগ্রাম দিয়ে লগইন করুন।", true); return; }
+
+            submitBtn.disabled = true; submitBtn.textContent = 'জমা হচ্ছে...';
+            const amount = parseInt(document.getElementById('amount').value);
+            const senderInfo = document.getElementById('sender-info').value.trim();
+            const trxId = document.getElementById('trx-id').value.trim();
+            const screenshot = document.getElementById('screenshot').value.trim();
+            
+            if (amount < (depositSettings.minimumDeposit || 1000)) {
+                showNotification(`ন্যূনতম ডিপোজিট ${(depositSettings.minimumDeposit || 1000).toLocaleString()} কয়েন।`, true);
+                submitBtn.disabled = false; submitBtn.textContent = 'রিভিউ এর জন্য জমা দিন'; return;
+            }
+            if (!senderInfo || !trxId || !screenshot) {
+                showNotification("অনুগ্রহ করে সমস্ত ঘর পূরণ করুন।", true);
+                submitBtn.disabled = false; submitBtn.textContent = 'রিভিউ এর জন্য জমা দিন'; return;
+            }
+
+            const depositData = {
+                userId: currentUserId, 
+                userName: currentUserName, 
+                amount,
+                method: e.target.dataset.methodName,
+                methodType: e.target.dataset.methodType,
+                senderInfo, 
+                transactionId: trxId,
+                screenshotUrl: screenshot, 
+                status: 'pending', 
+                timestamp: serverTimestamp()
+            };
+            try {
+                await push(ref(db, 'deposits'), depositData);
+                showNotification("ডিপোজিট অনুরোধ সফলভাবে জমা হয়েছে!");
+                e.target.reset();
+                setTimeout(() => showPage('main-page'), 2000);
+            } catch (error) {
+                showNotification("অনুরোধ জমা দিতে ব্যর্থ হয়েছে।", true); 
+                console.error(error);
+                submitBtn.disabled = false; 
+                submitBtn.textContent = 'রিভিউ এর জন্য জমা দিন';
+            }
+        });
+
+        function applyTheme(theme) { 
+            document.body.classList.toggle('light-mode', theme === 'light'); 
+            localStorage.setItem('theme', theme); 
+            
+            // Parent থেকে থিম আপডেট শোনা
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'THEME_UPDATE') {
+                    applyTheme(event.data.theme);
+                }
+            });
+        }
+        
+        dom.themeSwitcher.addEventListener('click', () => { 
+            const currentTheme = localStorage.getItem('theme') || 'dark'; 
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); 
+        });
+
+        // --- Initial Load ---
+        function init() {
+            // প্রথমে URL থেকে ডাটা রিসিভ করার চেষ্টা করা
+            const urlDataLoaded = initializeFromUrl();
+            
+            // যদি URL থেকে ডাটা না মেলে, তাহলে Telegram Web App ব্যবহার করা
+            if (!urlDataLoaded) {
+                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    initializeUser(tg.initDataUnsafe.user);
+                } else {
+                    initializeGuest();
+                }
+                applyTheme(localStorage.getItem('theme') || 'dark');
+            }
+            
+            fetchDepositSettings();
+        }
+
+        init();
+    </script>
+</body>
+</html>
