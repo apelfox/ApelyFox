@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Telegram Coin Miner - Page Not Found</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&display=swap");
+
+        :root {
+            --primary: #FFA500;
+            --primary-dark: #e59400;
+            --secondary: #FF6347;
+            --accent: #06d6a0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 16px;
+        }
+
+        .dark-mode {
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --bg: #111111;
+            --card: #1e1e1e;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg);
+            font-family: "Poppins", sans-serif;
+            color: var(--text);
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 2rem;
+            margin: auto;
+            display: grid;
+            color: var(--text-dark);
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .container h3 {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .container img {
+            width: 100%;
+            max-width: 300px;
+            margin: auto;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .footer {
+            display: grid;
+            gap: 2rem;
+            place-content: baseline;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer p {
+            font-size: 1rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .footer button {
+            padding: 1rem 2rem;
+            outline: none;
+            border: none;
+            border-radius: var(--radius);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .footer button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-direction: column;
+        }
+
+        .secondary-btn {
+            background: var(--card) !important;
+            color: var(--text) !important;
+            border: 2px solid var(--primary) !important;
+        }
+
+        @media (min-width: 640px) {
+            .container {
+                max-width: 1200px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 3rem;
+                align-items: center;
+            }
+            .container img {
+                max-width: 400px;
+                grid-area: 1/1/3/2;
+            }
+            .footer {
+                max-width: 400px;
+                text-align: left;
+            }
+            .header {
+                text-align: left;
+            }
+            .button-group {
+                flex-direction: row;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                column-gap: 5rem;
+            }
+            .header h1 {
+                font-size: 8rem;
+            }
+            .header h3 {
+                font-size: 2.5rem;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: bottom 0.5s ease-in-out;
+            text-align: center;
+            width: 90%;
+            max-width: 480px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+        .notification.show {
+            bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>404</h1>
+            <h3>Page Not Found!</h3>
+        </div>
+        <img src="https://i.ibb.co/SwXVhDrx/Page-Not-Found.png" alt="not found" />
+        <div class="footer">
+            <p>
+                We're sorry, the page you requested could not be found. Please go back
+                to the previous page or join our Telegram group for support!
+            </p>
+            <div class="button-group">
+                <button onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> GO BACK
+                </button>
+                <button onclick="joinTelegramGroup()" class="secondary-btn">
+                    <i class="fab fa-telegram"></i> JOIN GROUP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Telegram Web App initialization
+        let tg = null;
+        try { 
+            tg = window.Telegram.WebApp; 
+            tg.expand(); 
+        } catch (e) { 
+            console.warn("Telegram Web App not available"); 
+        }
+
+        // URL থেকে ডাটা রিসিভ করার ফাংশন
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const userData = params.get('userData');
+            
+            return {
+                userId: params.get('userId'),
+                theme: params.get('theme'),
+                userData: userData ? JSON.parse(decodeURIComponent(userData)) : null
+            };
+        }
+
+        // থিম অ্যাপ্লাই করার ফাংশন
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        // নোটিফিকেশন শো করার ফাংশন
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        // Go Back Function - আমাদের সিস্টেমের সাথে মিলিয়ে
+        function goBack() {
+            // Parent iframe-এ মেসেজ পাঠানো
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'NAVIGATE_TO',
+                    page: 'home'
+                }, '*');
+                return;
+            }
+            
+            // যদি standalone থাকে
+            if (document.referrer && document.referrer !== window.location.href) {
+                window.history.back();
+            } else {
+                // Home page-এ redirect
+                window.location.href = 'home.html';
+            }
+        }
+
+        // Join Telegram Group Function
+        function joinTelegramGroup() {
+            const telegramGroupUrl = 'https://t.me/your_main_group';
+            
+            // Telegram Web App-এ ওপেন করা
+            if (tg && tg.openTelegramLink) {
+                tg.openTelegramLink(telegramGroupUrl);
+            } else {
+                // Regular browser-এ ওপেন করা
+                window.open(telegramGroupUrl, '_blank');
+            }
+            
+            showNotification('Telegram group opened! Please join for support.');
+        }
+
+        // Parent থেকে মেসেজ শোনা
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'THEME_UPDATE') {
+                applyTheme(event.data.theme);
+            }
+        });
+
+        // পেজ লোড হওয়ার সময় initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            // URL থেকে ডাটা রিসিভ করা
+            const urlParams = getUrlParams();
+            
+            // থিম সেট করা
+            if (urlParams.theme) {
+                applyTheme(urlParams.theme);
+            } else {
+                // Local storage থেকে থিম চেক করা
+                const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+                applyTheme(savedDarkMode ? 'dark' : 'light');
+            }
+
+            // যদি Telegram Web App থাকে, তাহলে ইউজার ইনফো সেট করা
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                console.log('Telegram User:', user);
+            }
+
+            // URL থেকে ইউজার ডাটা থাকলে সেট করা
+            if (urlParams.userData) {
+                console.log('User Data from URL:', urlParams.userData);
+            }
+
+            showNotification('Page not found. Please check the URL or contact support.');
+        });
+
+        // Keyboard protection for mobile
+        function handleKeyboard() {
+            const viewport = window.visualViewport;
+            if (viewport) {
+                viewport.addEventListener('resize', () => {
+                    // Keyboard up/down handling
+                });
+            }
+        }
+
+        // Initialize keyboard protection
+        handleKeyboard();
+    </script>
+</body>
+
+</html>
