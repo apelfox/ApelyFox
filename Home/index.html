@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram Integrated Homepage</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary-color: #0088cc;
+            --secondary-color: #f0f0f0;
+            --text-color: #333;
+            --card-bg: #fff;
+            --header-bg: #fff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --gradient: linear-gradient(135deg, #0088cc 0%, #00c2cc 100%);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #FFA500;
+            --secondary-color: #111111;
+            --text-color: #f0f0f0;
+            --card-bg: #1e1e1e;
+            --header-bg: #1e1e1e;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            --gradient: linear-gradient(135deg, #FFA500 0%, #FF6347 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Header Section - Hidden but data kept internally */
+        header {
+            display: none; /* হেডার লুকানো */
+            background-color: var(--header-bg);
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 70%;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary-color);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            overflow: hidden;
+        }
+
+        .user-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Slider Section */
+        .slider-section {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .slider-container {
+            position: relative;
+            height: 180px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide-link {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .slide-indicators {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 2;
+        }
+
+        .slide-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .slide-indicator.active {
+            background-color: white;
+            transform: scale(1.2);
+        }
+
+        .slide-1 {
+            background: url('https://img.freepik.com/free-vector/colorful-welcome-lettering-modern-banner-invitation_1017-50216.jpg?semt=ais_hybrid&w=740&q=80');
+        }
+
+        .slide-2 {
+            background: url('https://img.freepik.com/free-vector/stylish-welcome-lettering-banner-join-with-joy-happiness_1017-57675.jpg?semt=ais_hybrid&w=740&q=80');
+        }
+
+        .slide-3 {
+            background: url('https://static.vecteezy.com/system/resources/previews/010/925/820/non_2x/colorful-welcome-design-template-free-vector.jpg');
+        }
+
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dot.active {
+            background-color: var(--primary-color);
+        }
+
+        /* Balance Section */
+        .balance-section {
+            margin: 25px 0;
+        }
+
+        .balance-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 165, 0, 0.1);
+        }
+
+        .balance-label {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .balance-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .balance-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px rgba(255, 165, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(255, 165, 0, 0.3);
+        }
+
+        /* User Rating Section */
+        .rating-section {
+            margin: 5px 0;
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .rating-frame {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            background-color: var(--card-bg);
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 2000;
+            transition: bottom 0.5s ease-in-out;
+            text-align: center;
+            width: 90%;
+            max-width: 480px;
+            background: var(--gradient);
+        }
+        .notification.show {
+            bottom: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .user-profile {
+                max-width: 100%;
+            }
+            
+            .balance-amount {
+                font-size: 28px;
+            }
+            
+            .balance-buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .balance-buttons {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .slider-container {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section - Hidden but data kept internally -->
+    <header style="display: none;">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <img id="user-avatar" src="https://i.ibb.co/L0xJ182/placeholder.png" alt="User Avatar">
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name">Loading...</div>
+                    </div>
+                </div>
+                <div class="theme-toggle">
+                    <span>Light</span>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Dark</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Slider Section -->
+        <section class="slider-section">
+            <div class="slider-container">
+                <div class="slide slide-1 active">
+                    <a href="https://t.me/your_main_group" class="slide-link" target="_blank"></a>
+                    <div class="slide-indicators">
+                        <div class="slide-indicator active" data-slide="0"></div>
+                        <div class="slide-indicator" data-slide="1"></div>
+                        <div class="slide-indicator" data-slide="2"></div>
+                    </div>
+                </div>
+                <div class="slide slide-2">
+                    <a href="https://t.me/your_support_group" class="slide-link" target="_blank"></a>
+                    <div class="slide-indicators">
+                        <div class="slide-indicator" data-slide="0"></div>
+                        <div class="slide-indicator active" data-slide="1"></div>
+                        <div class="slide-indicator" data-slide="2"></div>
+                    </div>
+                </div>
+                <div class="slide slide-3">
+                    <a href="https://example-promo-3.com" class="slide-link" target="_blank"></a>
+                    <div class="slide-indicators">
+                        <div class="slide-indicator" data-slide="0"></div>
+                        <div class="slide-indicator" data-slide="1"></div>
+                        <div class="slide-indicator active" data-slide="2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="slider-dots">
+                <div class="dot active" data-slide="0"></div>
+                <div class="dot" data-slide="1"></div>
+                <div class="dot" data-slide="2"></div>
+            </div>
+        </section>
+
+        <!-- Balance Section -->
+        <section class="balance-section">
+            <div class="balance-card">
+                <div class="balance-label">
+                    <img src="https://i.ibb.co/qLc58ntq/1000105515.jpg" alt="Wallet Icon" class="balance-icon">
+                    Main Balance
+                </div>
+                <div class="balance-amount" id="balance-amount">0</div>
+                <div class="balance-buttons">
+                    <button class="btn btn-primary" id="withdraw-btn">Withdraw</button>
+                    <button class="btn btn-secondary" id="wallet-btn">All Wallet</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Rating Section -->
+        <section class="rating-section">
+            <iframe class="rating-frame" id="rating-frame" src=""></iframe>
+        </section>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
+            authDomain: "apelyfox-164c1.firebaseapp.com",
+            databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
+            projectId: "apelyfox-164c1",
+            storageBucket: "apelyfox-164c1.firebasestorage.app",
+            messagingSenderId: "1081216277329",
+            appId: "1:1081216277329:web:bfe0c3e9b4769d92e51170"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let tg = null;
+        try { 
+            tg = window.Telegram.WebApp; 
+            tg.expand(); 
+        } catch (e) { 
+            console.warn("Telegram Web App not available"); 
+        }
+
+        // URL থেকে ডাটা রিসিভ করার ফাংশন
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const userData = params.get('userData');
+            
+            return {
+                userId: params.get('userId'),
+                theme: params.get('theme'),
+                userData: userData ? JSON.parse(decodeURIComponent(userData)) : null
+            };
+        }
+
+        // Global variables
+        let currentUserId = null;
+        let userDataFromParent = null;
+        let userRef = null;
+
+        // DOM Elements
+        const userNameElement = document.getElementById('user-name');
+        const userAvatarElement = document.getElementById('user-avatar');
+        const balanceAmountElement = document.getElementById('balance-amount');
+        const withdrawBtn = document.getElementById('withdraw-btn');
+        const walletBtn = document.getElementById('wallet-btn');
+        const ratingFrame = document.getElementById('rating-frame');
+        const themeToggle = document.getElementById('theme-toggle');
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        const slideIndicators = document.querySelectorAll('.slide-indicator');
+
+        // Slider functionality
+        let currentSlide = 0;
+        const slideCount = slides.length;
+        let slideInterval;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            slideIndicators.forEach(indicator => indicator.classList.remove('active'));
+            
+            slides[n].classList.add('active');
+            dots[n].classList.add('active');
+            
+            const activeIndicators = document.querySelectorAll(`.slide-indicator[data-slide="${n}"]`);
+            activeIndicators.forEach(indicator => indicator.classList.add('active'));
+            
+            currentSlide = n;
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slideCount;
+            showSlide(currentSlide);
+        }
+
+        // থিম অ্যাপ্লাই করার ফাংশন
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                if (themeToggle) themeToggle.checked = true;
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                if (themeToggle) themeToggle.checked = false;
+            }
+        }
+
+        // নোটিফিকেশন শো করার ফাংশন
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        // Parent থেকে মেসেজ শোনা
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'THEME_UPDATE') {
+                applyTheme(event.data.theme);
+            } else if (event.data.type === 'COIN_UPDATE') {
+                updateBalanceDisplay(event.data.coins);
+            }
+        });
+
+        // ব্যালেন্স আপডেট ফাংশন
+        function updateBalanceDisplay(coins) {
+            balanceAmountElement.textContent = Math.floor(coins || 0).toLocaleString();
+        }
+
+        // URL থেকে ডাটা রিসিভ করে ইউজার ইনিশিয়ালাইজ করা
+        function initializeFromUrl() {
+            const urlParams = getUrlParams();
+            currentUserId = urlParams.userId;
+            userDataFromParent = urlParams.userData;
+            
+            if (currentUserId && userDataFromParent) {
+                initializeUserFromParent();
+                return true;
+            }
+            return false;
+        }
+
+        // মূল আইফ্রেম থেকে প্রাপ্ত ডাটা দিয়ে ইউজার ইনিশিয়ালাইজ করা
+        function initializeUserFromParent() {
+            userNameElement.textContent = userDataFromParent.name || 'Guest User';
+            userAvatarElement.src = userDataFromParent.photoUrl || 'https://i.ibb.co/L0xJ182/placeholder.png';
+            updateBalanceDisplay(userDataFromParent.coins || 0);
+            
+            // Firebase থেকে রিয়েল-টাইম ডাটা আপডেট শোনা
+            userRef = database.ref('users/' + currentUserId);
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    updateBalanceDisplay(userData.coins || 0);
+                }
+            });
+
+            setupRatingFrame();
+            showNotification('Welcome back!');
+        }
+
+        // Telegram থেকে ইউজার ইনিশিয়ালাইজ করা
+        function initializeUser(tgUser) {
+            currentUserId = tgUser.id.toString();
+            userNameElement.textContent = `${tgUser.first_name} ${tgUser.last_name || ''}`.trim();
+            userAvatarElement.src = tgUser.photo_url || 'https://i.ibb.co/L0xJ182/placeholder.png';
+            
+            userRef = database.ref('users/' + currentUserId);
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    updateBalanceDisplay(userData.coins || 0);
+                }
+            });
+
+            setupRatingFrame();
+            showNotification('Welcome to Telegram Coin Miner!');
+        }
+
+        // রেটিং ফ্রেম সেটআপ
+        function setupRatingFrame() {
+            // Set the iframe source
+            ratingFrame.src = `user-rating.html?userId=${currentUserId}`;
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Theme toggle
+            if (themeToggle) {
+                themeToggle.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'dark' : 'light';
+                    applyTheme(newTheme);
+                    
+                    // Parent iframe-এ থিম আপডেট পাঠানো
+                    if (window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'THEME_UPDATE',
+                            theme: newTheme
+                        }, '*');
+                    }
+                });
+            }
+
+            // Slider dots
+            dots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const slideIndex = parseInt(this.getAttribute('data-slide'));
+                    showSlide(slideIndex);
+                    resetSlideInterval();
+                });
+            });
+
+            // Slide indicators
+            slideIndicators.forEach(indicator => {
+                indicator.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const slideIndex = parseInt(this.getAttribute('data-slide'));
+                    showSlide(slideIndex);
+                    resetSlideInterval();
+                });
+            });
+
+            // Button events
+            withdrawBtn.addEventListener('click', () => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'NAVIGATE_TO',
+                        page: 'withdraw'
+                    }, '*');
+                } else {
+                    window.location.href = 'withdraw.html';
+                }
+            });
+
+            walletBtn.addEventListener('click', () => {
+                showNotification('Wallet feature coming soon!');
+            });
+        }
+
+        function resetSlideInterval() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        // Initialize the application
+        function initializeApp() {
+            // প্রথমে URL থেকে ডাটা রিসিভ করার চেষ্টা করা
+            const urlDataLoaded = initializeFromUrl();
+            
+            // যদি URL থেকে ডাটা না মেলে, তাহলে Telegram Web App ব্যবহার করা
+            if (!urlDataLoaded && tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                initializeUser(tg.initDataUnsafe.user);
+            } else if (!urlDataLoaded) {
+                // Guest mode
+                userNameElement.textContent = "Guest User";
+                balanceAmountElement.textContent = "0";
+                showNotification('Please login via Telegram');
+            }
+
+            // থিম সেট করা
+            const urlParams = getUrlParams();
+            if (urlParams.theme) {
+                applyTheme(urlParams.theme);
+            } else {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                applyTheme(savedTheme);
+            }
+
+            setupEventListeners();
+            
+            // Start slider
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
