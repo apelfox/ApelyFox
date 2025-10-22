@@ -10,7 +10,7 @@
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -133,12 +133,6 @@
             border: none; 
             border-radius: 15px; 
             background: var(--bg-color);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1500;
             display: none;
         }
         
@@ -146,11 +140,10 @@
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100%; 
+            height: 200px; 
             color: var(--text-secondary);
             flex-direction: column;
             gap: 20px;
-            background: var(--bg-color);
         }
         .loading-spinner {
             width: 50px;
@@ -462,8 +455,8 @@
                             </div>
                             <div class="balance-amount" id="balance-amount">Loading...</div>
                             <div class="balance-buttons">
-                                <a href="#" class="btn btn-primary" id="withdraw-btn">Withdraw</a>
-                                <a href="#" class="btn btn-secondary" id="wallet-btn">All Wallet</a>
+                                <button class="btn btn-primary" id="withdraw-btn">Withdraw</button>
+                                <button class="btn btn-secondary" id="wallet-btn">All Wallet</button>
                             </div>
                         </div>
                     </section>
@@ -489,7 +482,7 @@
                 </div>
                 <iframe 
                     id="content-frame" 
-                    style="width: 100%; height: 100%; border: none; display: none;"
+                    style="width: 100%; height: 100%; border: none; border-radius: 15px; display: none;"
                     allow="clipboard-write"
                 ></iframe>
             </div>
@@ -662,18 +655,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
-                authDomain: "apelyfox-164c1.firebaseapp.com",
-                databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
-                projectId: "apelyfox-164c1",
-                storageBucket: "apelyfox-164c1.firebasestorage.app",
-                messagingSenderId: "1081216277329",
-                appId: "1:1081216277329:web:bfe0c3e9b4769d92e51170"
-            };
+const firebaseConfig = {
+  apiKey: "AIzaSyDan31qsrOecKIs6wLUjWfWafIzq8oXWpY",
+  authDomain: "apelyfox-164c1.firebaseapp.com",
+  databaseURL: "https://apelyfox-164c1-default-rtdb.firebaseio.com",
+  projectId: "apelyfox-164c1",
+  storageBucket: "apelyfox-164c1.firebasestorage.app",
+  messagingSenderId: "1081216277329",
+  appId: "1:1081216277329:web:bfe0c3e9b4769d92e51170"
+};
+
             
             firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
+            const database = firebase.database();
             const auth = firebase.auth();
             const tg = window.Telegram.WebApp;
             
@@ -801,8 +795,16 @@
                     });
                 });
 
-                // Setup button URLs with complete user data
-                setupButtonUrls();
+                // Setup button event listeners for iframe navigation
+                withdrawBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    loadPage('withdraw.html', 'withdraw');
+                });
+
+                walletBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    loadPage('wallet.html', 'wallet');
+                });
 
                 // Start slider
                 startSlider();
@@ -810,18 +812,18 @@
                 // Load user balance
                 loadUserBalance();
 
-                // Setup rating frame with complete data
+                // Setup rating frame
                 setupRatingFrame();
             }
 
             function loadUserBalance() {
                 if (!currentUserId) return;
                 
-                const balanceRef = db.collection('userBalance').doc(currentUserId);
-                balanceRef.onSnapshot((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        balanceAmountElement.textContent = data.mainBalance ? `$${data.mainBalance.toFixed(2)}` : '$0.00';
+                userRef.on('value', (snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData && userData.coins !== undefined) {
+                        const balance = userData.coins || 0;
+                        balanceAmountElement.textContent = `$${balance.toFixed(2)}`;
                     } else {
                         balanceAmountElement.textContent = '$0.00';
                     }
@@ -834,39 +836,15 @@
             function setupRatingFrame() {
                 if (!currentUserId) return;
                 
-                const frameData = {
-                    userId: currentUserId,
-                    theme: currentTheme,
-                    userData: userState,
+                const url = `rating.html?userId=${currentUserId}&theme=${currentTheme}&userData=${encodeURIComponent(JSON.stringify({
                     name: userState.firstName || userState.name,
                     coins: userState.coins || 0,
                     chatId: currentUserId,
                     isPremium: userPlanState.premium || false,
                     vipLevel: userPlanState.vipLevel || 0
-                };
+                }))}`;
                 
-                const encodedData = encodeURIComponent(JSON.stringify(frameData));
-                ratingFrame.src = `rating.html?data=${encodedData}`;
-            }
-
-            function setupButtonUrls() {
-                if (!currentUserId) return;
-                
-                const buttonData = {
-                    userId: currentUserId,
-                    theme: currentTheme,
-                    userData: userState,
-                    coins: userState.coins || 0,
-                    name: userState.firstName || userState.name,
-                    chatId: currentUserId,
-                    isPremium: userPlanState.premium || false,
-                    vipLevel: userPlanState.vipLevel || 0
-                };
-                
-                const encodedData = encodeURIComponent(JSON.stringify(buttonData));
-                
-                withdrawBtn.href = `withdraw.html?data=${encodedData}`;
-                walletBtn.href = `wallet.html?data=${encodedData}`;
+                ratingFrame.src = url;
             }
 
             // --- NOTIFICATION SYSTEM ---
@@ -912,19 +890,15 @@
             function openNotificationFrame() {
                 if (!currentUserId) return;
                 
-                const notificationData = {
-                    userId: currentUserId,
-                    theme: currentTheme,
-                    userData: userState,
+                const url = `notifications.html?userId=${currentUserId}&theme=${currentTheme}&userData=${encodeURIComponent(JSON.stringify({
                     name: userState.firstName || userState.name,
                     coins: userState.coins || 0,
                     chatId: currentUserId,
                     isPremium: userPlanState.premium || false,
                     vipLevel: userPlanState.vipLevel || 0
-                };
+                }))}`;
                 
-                const encodedData = encodeURIComponent(JSON.stringify(notificationData));
-                notificationFrame.src = `notifications.html?data=${encodedData}`;
+                notificationFrame.src = url;
                 notificationFrameModal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
                 
@@ -992,13 +966,13 @@
             // --- NAVIGATION ---
             function loadPage(fileName, pageName) {
                 if (fileName === 'home') {
-                    // Show homepage content immediately
+                    // Show homepage content
                     homepageContent.style.display = 'block';
                     homeLoading.style.display = 'none';
                     iframeContainer.style.display = 'none';
                     initializeHomepage();
                 } else {
-                    // Show iframe for other pages - full screen
+                    // Show iframe for other pages
                     homepageContent.style.display = 'none';
                     homeLoading.style.display = 'none';
                     iframeContainer.style.display = 'block';
@@ -1009,19 +983,14 @@
                     const loadingText = iframeLoading.querySelector('.loading-text');
                     loadingText.textContent = `Loading ${pageName.replace('-', ' ')}...`;
 
-                    // Send complete user data via URL parameters
-                    const urlData = {
-                        userId: currentUserId,
-                        theme: currentTheme,
-                        userData: userState,
+                    // Send user data via URL parameters (original format)
+                    const url = `${fileName}?userId=${currentUserId}&theme=${currentTheme}&userData=${encodeURIComponent(JSON.stringify({
                         name: userState.firstName || userState.name,
                         coins: userState.coins || 0,
                         chatId: currentUserId,
                         isPremium: userPlanState.premium || false,
                         vipLevel: userPlanState.vipLevel || 0
-                    };
-
-                    const url = `${fileName}?data=${encodeURIComponent(JSON.stringify(urlData))}`;
+                    }))}`;
 
                     contentFrame.src = url;
 
@@ -1058,65 +1027,53 @@
             });
 
             // --- USER DATA MANAGEMENT ---
-            async function saveUserProfileToDatabase(tgUser) {
-                try {
-                    const userData = {
-                        telegramId: tgUser.id,
-                        firstName: tgUser.first_name,
-                        lastName: tgUser.last_name || '',
-                        username: tgUser.username || '',
-                        photoUrl: tgUser.photo_url || 'https://i.ibb.co/L0xJ182/placeholder.png',
-                        languageCode: tgUser.language_code || 'en',
-                        isPremium: tgUser.is_premium || false,
-                        coins: 0,
-                        totalMined: 0,
-                        level: 1,
-                        referrals: 0,
-                        referralIncome: 0,
-                        isBlocked: false,
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        referrerId: tg.initDataUnsafe.start_param || null,
-                        claimedReferral: false
-                    };
+            function saveUserProfileToDatabase(tgUser) {
+                const userData = {
+                    telegramId: tgUser.id,
+                    firstName: tgUser.first_name,
+                    lastName: tgUser.last_name || '',
+                    username: tgUser.username || '',
+                    photoUrl: tgUser.photo_url || 'https://i.ibb.co/L0xJ182/placeholder.png',
+                    languageCode: tgUser.language_code || 'en',
+                    isPremium: tgUser.is_premium || false,
+                    coins: 0,
+                    totalMined: 0,
+                    level: 1,
+                    referrals: 0,
+                    referralIncome: 0,
+                    isBlocked: false,
+                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    referrerId: tg.initDataUnsafe.start_param || null,
+                    claimedReferral: false
+                };
 
-                    // Save to Firestore users collection
-                    await userRef.set(userData);
+                // Save to users collection
+                userRef.update(userData);
 
-                    // Initialize user balance in Firestore
-                    const balanceRef = db.collection('userBalance').doc(currentUserId);
-                    await balanceRef.set({
-                        mainBalance: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Initialize user plan if not exists
-                    userPlanRef.once('value', (snapshot) => {
-                        if (!snapshot.exists()) {
-                            const planData = {
-                                premium: false,
-                                vipLevel: 0,
-                                joinDate: firebase.database.ServerValue.TIMESTAMP,
-                                lastUpdated: firebase.database.ServerValue.TIMESTAMP
-                            };
-                            userPlanRef.set(planData);
-                        }
-                    });
-
-                    // Send welcome notification
-                    const welcomeNotification = {
-                        title: 'Welcome to Our App!',
-                        message: 'Thank you for joining us. Start mining and earning now!',
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        read: false,
-                        type: 'welcome'
-                    };
-                    if (notificationsRef) {
-                        notificationsRef.push(welcomeNotification);
+                // Initialize user plan if not exists
+                userPlanRef.once('value', (snapshot) => {
+                    if (!snapshot.exists()) {
+                        const planData = {
+                            premium: false,
+                            vipLevel: 0,
+                            joinDate: firebase.database.ServerValue.TIMESTAMP,
+                            lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                        };
+                        userPlanRef.set(planData);
                     }
+                });
 
-                } catch (error) {
-                    console.error('Error saving user data:', error);
+                // Send welcome notification
+                const welcomeNotification = {
+                    title: 'Welcome to Our App!',
+                    message: 'Thank you for joining us. Start mining now!',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false,
+                    type: 'welcome'
+                };
+                if (notificationsRef) {
+                    notificationsRef.push(welcomeNotification);
                 }
             }
 
@@ -1175,53 +1132,47 @@
                     
                     updateUserProfileFromTelegram();
                     
-                    userRef = db.collection('users').doc(currentUserId);
+                    userRef = database.ref('users/' + currentUserId);
                     userPlanRef = database.ref('usersPlanLevel/' + currentUserId);
                     notificationsRef = database.ref('notifications/' + currentUserId);
                     
                     auth.signInAnonymously().catch(error => console.error("Auth Error:", error));
-                    auth.onAuthStateChanged(async (authUser) => {
+                    auth.onAuthStateChanged(authUser => {
                         if (authUser) {
                             console.log('Firebase Auth Successful');
                             
-                            try {
-                                // Check if user exists in Firestore
-                                const userDoc = await userRef.get();
-                                if (!userDoc.exists) {
-                                    console.log('Creating new user in Firestore');
-                                    await saveUserProfileToDatabase(tgUser);
+                            // Check if user exists, if not create new user
+                            userRef.once('value', (snapshot) => {
+                                if (!snapshot.exists()) {
+                                    console.log('Creating new user in database');
+                                    saveUserProfileToDatabase(tgUser);
                                 } else {
-                                    userState = userDoc.data();
+                                    userState = snapshot.val();
                                     if(userState.isBlocked) {
                                         document.body.innerHTML = '<h1>Your account has been blocked.</h1>';
                                         return;
                                     }
                                     console.log('Existing user found:', userState);
                                 }
+                            });
 
-                                // Listen for user data changes in Firestore
-                                userRef.onSnapshot((doc) => {
-                                    if (doc.exists) {
-                                        userState = doc.data();
-                                        updateMenuProfile();
-                                    }
-                                });
+                            // Listen for user data changes
+                            userRef.on('value', (snapshot) => {
+                                userState = snapshot.val() || {};
+                                updateMenuProfile();
+                            });
 
-                                // Listen for user plan data changes in Realtime DB
-                                userPlanRef.on('value', (snapshot) => {
-                                    userPlanState = snapshot.val() || {};
-                                    updateMenuProfile();
-                                });
+                            // Listen for user plan data changes
+                            userPlanRef.on('value', (snapshot) => {
+                                userPlanState = snapshot.val() || {};
+                                updateMenuProfile();
+                            });
 
-                                // Load notifications
-                                loadNotifications();
+                            // Load notifications
+                            loadNotifications();
 
-                                // Load home page immediately on app start
-                                loadPage('home', 'home');
-
-                            } catch (error) {
-                                console.error('Error in user initialization:', error);
-                            }
+                            // Load home page by default
+                            loadPage('home', 'home');
 
                         }
                     });
